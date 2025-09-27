@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # ------------------
+  # Database Service
+  # ------------------
+  mongo:
+    image: mongo:latest
+    container_name: mongo_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+  # ------------------
+  # Backend Microservices
+  # ------------------
+  auth-service:
+    build: ./auth-service
+    container_name: auth_service
+    volumes:
+      - ./auth-service/app:/app/app
+      - ./shared:/app/shared_lib # Mount shared library
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=mongodb://admin:password@mongo:27017
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    depends_on:
+      - mongo
+
+  account-service:
+    build: ./account-service
+    container_name: account_service
+    volumes:
+      - ./account-service/app:/app/app
+      - ./shared:/app/shared_lib # Mount shared library
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=mongodb://admin:password@mongo:27017
+    depends_on:
+      - mongo
+
+  transaction-service:
+    build: ./transaction-service
+    container_name: transaction_service
+    volumes:
+      - ./transaction-service/app:/app/app
+      - ./shared:/app/shared_lib # Mount shared library
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=mongodb://admin:password@mongo:27017
+    depends_on:
+      - mongo
+
+  risk-service:
+    build: ./risk-service
+    container_name: risk_service
+    volumes:
+      - ./risk-service/app:/app/app
+      - ./shared:/app/shared_lib # Mount shared library
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=mongodb://admin:password@mongo:27017
+    depends_on:
+      - mongo
+
+  # ------------------
+  # API Gateway
+  # ------------------
+  api-gateway:
+    build: ./api-gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api-gateway/app:/app/app
+      - ./shared:/app/shared_lib # Mount shared library
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - auth-service
+      - account-service
+      - transaction-service
+      - risk-service
+
+  # ------------------
+  # Frontend Service
+  # ------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend_app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongo_data:
+    driver: local

@@ -1,0 +1,16 @@
+# Use a Node image to run the dev server
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the Vite port
+EXPOSE 3000
+
+# Start the development server
+CMD ["npm", "run", "dev"]

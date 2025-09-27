@@ -1,0 +1,21 @@
+[project]
+name = "auth-service"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
+    "beanie",
+    "motor",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "sendgrid",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
